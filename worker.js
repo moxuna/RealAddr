@@ -1613,15 +1613,7 @@ const htmlContent = `<!DOCTYPE html>
         .segmented button[aria-checked="true"] { color: var(--ink); }
         .segmented-thumb { position: absolute; top: 3px; bottom: 3px; left: 3px; border-radius: 8px; background: var(--surface); box-shadow: 0 1px 2px rgba(13, 18, 32, .08), 0 0 0 1px var(--line); transition: transform .25s cubic-bezier(.3, .7, .2, 1), width .25s cubic-bezier(.3, .7, .2, 1); }
 
-        /* 免税州开关（仅美国显示） */
         .select-wrap--state { flex: 0 1 230px; min-width: 170px; }
-        .switch-chip { display: inline-flex; align-items: center; gap: 9px; height: 40px; padding: 0 14px 0 12px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-2); color: var(--ink-2); font-weight: 500; cursor: pointer; white-space: nowrap; transition: border-color .15s, color .15s, background .15s; }
-        .switch-chip:hover { border-color: var(--line-strong); color: var(--ink); }
-        .switch-track { position: relative; width: 28px; height: 16px; border-radius: 999px; background: var(--line-strong); transition: background .2s; }
-        .switch-track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 2px rgba(13, 18, 32, .2); transition: transform .2s cubic-bezier(.3, .7, .2, 1); }
-        .switch-chip[aria-pressed="true"] { border-color: var(--tax); background: var(--tax-soft); color: var(--tax); }
-        .switch-chip[aria-pressed="true"] .switch-track { background: var(--tax); }
-        .switch-chip[aria-pressed="true"] .switch-track::after { transform: translateX(12px); }
 
         .toolbar-end { margin-left: auto; display: flex; align-items: center; gap: 12px; }
         .hint { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-3); font-size: 12px; }
@@ -1830,10 +1822,6 @@ const htmlContent = `<!DOCTYPE html>
                     <button type="button" role="radio" data-type="commercial" aria-checked="false">商业</button>
                     <button type="button" role="radio" data-type="any" aria-checked="false">不限</button>
                 </div>
-                <button type="button" id="taxFreeToggle" class="switch-chip" aria-pressed="false" hidden title="只在不征收州销售税的州（OR、DE、NH、MT、AK）中生成">
-                    <span class="switch-track" aria-hidden="true"></span>
-                    免税州
-                </button>
                 <div class="toolbar-end">
                     <span class="hint">按 <kbd>R</kbd> 换一个</span>
                     <button type="button" id="generateBtn" class="btn btn-primary">
@@ -2044,7 +2032,7 @@ const htmlContent = `<!DOCTYPE html>
         const NEWLINE = String.fromCharCode(10);
 
         // current：接口返回的原始结果；view：当前显示的版本（香港地址可切换英文 / 繁体中文）
-        const state = { country: 'US', type: 'residential', taxFree: false, region: '', hkLang: 'en', current: null, view: null, requestId: 0 };
+        const state = { country: 'US', type: 'residential', region: '', hkLang: 'en', current: null, view: null, requestId: 0 };
 
         function byId(id) {
             return document.getElementById(id);
@@ -2117,7 +2105,7 @@ const htmlContent = `<!DOCTYPE html>
         }
 
         function savePrefs() {
-            writeStorage(PREFS_KEY, { country: state.country, type: state.type, taxFree: state.taxFree, region: state.region, hkLang: state.hkLang });
+            writeStorage(PREFS_KEY, { country: state.country, type: state.type, region: state.region, hkLang: state.hkLang });
         }
 
         // 分段控件的滑块跟随选中项
@@ -2133,19 +2121,6 @@ const htmlContent = `<!DOCTYPE html>
                 thumb.style.width = active.offsetWidth + 'px';
                 thumb.style.transform = 'translateX(' + (active.offsetLeft - 3) + 'px)';
             }
-        }
-
-        // 免税州开关只对美国有效
-        function syncTaxFreeToggle() {
-            const toggle = byId('taxFreeToggle');
-            toggle.hidden = state.country !== 'US';
-            toggle.setAttribute('aria-pressed', String(state.taxFree));
-            if (state.taxFree && state.region) {
-                state.region = '';
-                const regionSelect = byId('stateSelect');
-                if (regionSelect) regionSelect.value = '';
-            }
-            syncRegionWrap();
         }
 
         function setLoading(loading) {
@@ -2296,9 +2271,8 @@ const htmlContent = `<!DOCTYPE html>
             setLoading(true);
             hideError();
             try {
-                const taxFreeParam = state.country === 'US' && state.taxFree ? '&taxFree=1' : '';
                 const regionParam = state.region ? '&state=' + encodeURIComponent(state.region) : '';
-                const response = await fetch('/api?country=' + encodeURIComponent(state.country) + '&type=' + encodeURIComponent(state.type) + taxFreeParam + regionParam);
+                const response = await fetch('/api?country=' + encodeURIComponent(state.country) + '&type=' + encodeURIComponent(state.type) + regionParam);
                 const data = await response.json();
                 if (requestId !== state.requestId) return;
                 if (!response.ok || data.error) {
@@ -2418,7 +2392,7 @@ const htmlContent = `<!DOCTYPE html>
         function syncRegionWrap() {
             const wrap = byId('stateWrap');
             if (!wrap) return;
-            wrap.hidden = regionOptions.length < 2 || state.taxFree;
+            wrap.hidden = regionOptions.length < 2;
         }
 
         async function loadRegions() {
@@ -2452,7 +2426,6 @@ const htmlContent = `<!DOCTYPE html>
             const prefs = readStorage(PREFS_KEY, {});
             if (COUNTRIES.some(function (c) { return c.code === prefs.country; })) state.country = prefs.country;
             if (ADDRESS_TYPES.indexOf(prefs.type) >= 0) state.type = prefs.type;
-            state.taxFree = prefs.taxFree === true;
             state.region = typeof prefs.region === 'string' ? prefs.region : '';
             if (prefs.hkLang === 'zh') state.hkLang = 'zh';
 
@@ -2479,14 +2452,6 @@ const htmlContent = `<!DOCTYPE html>
             });
 
             loadRegions();
-
-            syncTaxFreeToggle();
-            byId('taxFreeToggle').addEventListener('click', function () {
-                state.taxFree = !state.taxFree;
-                syncTaxFreeToggle();
-                savePrefs();
-                generate();
-            });
 
             document.querySelectorAll('#typeSwitch button').forEach(function (button) {
                 button.addEventListener('click', function () {
