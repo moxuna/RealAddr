@@ -14,3 +14,4 @@ worker-testable.cjs
 
 # 历史快照与备份
 _archive/
+_patch/
