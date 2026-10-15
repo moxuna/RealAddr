@@ -54,6 +54,183 @@ const US_TAX_FREE_STATES = {
     AK: { name: 'Alaska', note: '不征收州销售税，部分城市另收地方销售税' }
 };
 
+// 城市 → 次级行政区（美国、沙特、尼日利亚的数据自带州字段，其余国家按城市归到省/州/大区）
+const CITY_REGIONS = {
+'CN|Beijing': '北京市',
+'CN|Shanghai': '上海市',
+'CN|Guangzhou': '广东省',
+'CN|Shenzhen': '广东省',
+'CN|Dongguan': '广东省',
+'CN|Foshan': '广东省',
+'CN|Chengdu': '四川省',
+'CN|Hangzhou': '浙江省',
+'CN|Ningbo': '浙江省',
+'CN|Tianjin': '天津市',
+'CN|Nanjing': '江苏省',
+'CN|Suzhou': '江苏省',
+'CN|Wuhan': '湖北省',
+'CN|Chongqing': '重庆市',
+'CN|Xian': '陕西省',
+'CN|Qingdao': '山东省',
+'CN|Jinan': '山东省',
+'CN|Dalian': '辽宁省',
+'CN|Shenyang': '辽宁省',
+'CN|Xiamen': '福建省',
+'CN|Fuzhou': '福建省',
+'CN|Changsha': '湖南省',
+'CN|Zhengzhou': '河南省',
+'CN|Kunming': '云南省',
+'CN|Hefei': '安徽省',
+'CN|Harbin': '黑龙江省',
+'TW|Taipei': '台北市',
+'TW|Kaohsiung': '高雄市',
+'TW|Taichung': '台中市',
+'TW|Tainan': '台南市',
+'HK|Hong Kong': '香港岛',
+'HK|Kowloon': '九龙',
+'HK|Tsuen Wan': '新界',
+'HK|Sha Tin': '新界',
+'JP|Tokyo': '东京都',
+'JP|Osaka': '大阪府',
+'JP|Yokohama': '神奈川县',
+'JP|Nagoya': '爱知县',
+'JP|Kyoto': '京都府',
+'JP|Fukuoka': '福冈县',
+'JP|Sapporo': '北海道',
+'JP|Kobe': '兵库县',
+'JP|Sendai': '宫城县',
+'JP|Hiroshima': '广岛县',
+'KR|Seoul': '首尔特别市',
+'KR|Busan': '釜山广域市',
+'KR|Incheon': '仁川广域市',
+'KR|Daegu': '大邱广域市',
+'IN|Delhi': '德里',
+'IN|Mumbai': '马哈拉施特拉邦',
+'IN|Pune': '马哈拉施特拉邦',
+'IN|Nagpur': '马哈拉施特拉邦',
+'IN|Bangalore': '卡纳塔克邦',
+'IN|Hyderabad': '特伦甘纳邦',
+'IN|Chennai': '泰米尔纳德邦',
+'IN|Kolkata': '西孟加拉邦',
+'IN|Ahmedabad': '古吉拉特邦',
+'IN|Surat': '古吉拉特邦',
+'IN|Jaipur': '拉贾斯坦邦',
+'IN|Lucknow': '北方邦',
+'IN|Indore': '中央邦',
+'IN|Bhopal': '中央邦',
+'IN|Patna': '比哈尔邦',
+'AU|Sydney': '新南威尔士州',
+'AU|Melbourne': '维多利亚州',
+'AU|Brisbane': '昆士兰州',
+'AU|Perth': '西澳大利亚州',
+'BR|São Paulo': '圣保罗州',
+'BR|Rio de Janeiro': '里约热内卢州',
+'BR|Brasília': '联邦区',
+'BR|Salvador': '巴伊亚州',
+'BR|Belo Horizonte': '米纳斯吉拉斯州',
+'CA|Toronto': '安大略省',
+'CA|Ottawa': '安大略省',
+'CA|Montreal': '魁北克省',
+'CA|Vancouver': '不列颠哥伦比亚省',
+'RU|Moscow': '莫斯科市',
+'RU|Saint Petersburg': '圣彼得堡市',
+'RU|Novosibirsk': '新西伯利亚州',
+'RU|Yekaterinburg': '斯维尔德洛夫斯克州',
+'ZA|Cape Town': '西开普省',
+'ZA|Stellenbosch': '西开普省',
+'ZA|George': '西开普省',
+'ZA|Johannesburg': '豪登省',
+'ZA|Pretoria': '豪登省',
+'ZA|Durban': '夸祖鲁-纳塔尔省',
+'ZA|Pietermaritzburg': '夸祖鲁-纳塔尔省',
+'ZA|Port Elizabeth': '东开普省',
+'ZA|East London': '东开普省',
+'ZA|Bloemfontein': '自由州省',
+'ZA|Polokwane': '林波波省',
+'ZA|Nelspruit': '姆普马兰加省',
+'ZA|Kimberley': '北开普省',
+'ZA|Potchefstroom': '西北省',
+'MX|Mexico City': '墨西哥城',
+'MX|Guadalajara': '哈利斯科州',
+'MX|Monterrey': '新莱昂州',
+'MX|Puebla': '普埃布拉州',
+'IT|Rome': '拉齐奥大区',
+'IT|Milan': '伦巴第大区',
+'IT|Naples': '坎帕尼亚大区',
+'IT|Turin': '皮埃蒙特大区',
+'IT|Florence': '托斯卡纳大区',
+'ES|Madrid': '马德里自治区',
+'ES|Barcelona': '加泰罗尼亚自治区',
+'ES|Valencia': '瓦伦西亚自治区',
+'ES|Seville': '安达卢西亚自治区',
+'TR|Istanbul': '伊斯坦布尔省',
+'TR|Ankara': '安卡拉省',
+'TR|Izmir': '伊兹密尔省',
+'TR|Bursa': '布尔萨省',
+'TR|Antalya': '安塔利亚省',
+'TR|Konya': '科尼亚省',
+'TR|Adana': '阿达纳省',
+'TR|Gaziantep': '加济安泰普省',
+'TR|Kayseri': '开塞利省',
+'TR|Mersin': '梅尔辛省',
+'TR|Diyarbakir': '迪亚巴克尔省',
+'TR|Eskisehir': '埃斯基谢希尔省',
+'TR|Samsun': '萨姆松省',
+'TR|Denizli': '代尼兹利省',
+'TR|Sanliurfa': '尚勒乌尔法省',
+'TR|Trabzon': '特拉布宗省',
+'AR|Buenos Aires': '布宜诺斯艾利斯自治市',
+'AR|Córdoba': '科尔多瓦省',
+'EG|Cairo': '开罗省',
+'EG|Alexandria': '亚历山大省',
+'ID|Jakarta': '雅加达首都特区',
+'ID|Semarang': '中爪哇省',
+'ID|Surabaya': '东爪哇省',
+'ID|Bandung': '西爪哇省',
+'ID|Medan': '北苏门答腊省',
+'ID|Denpasar': '巴厘省',
+'UK|London': '英格兰',
+'UK|Manchester': '英格兰',
+'UK|Birmingham': '英格兰',
+'UK|Glasgow': '苏格兰',
+'UK|Edinburgh': '苏格兰',
+'FR|Paris': '法兰西岛',
+'FR|Lyon': '奥弗涅-罗讷-阿尔卑斯大区',
+'FR|Marseille': '普罗旺斯-阿尔卑斯-蓝色海岸大区',
+'FR|Nice': '普罗旺斯-阿尔卑斯-蓝色海岸大区',
+'FR|Toulouse': '奥克西塔尼大区',
+'DE|Berlin': '柏林州',
+'DE|Munich': '巴伐利亚州',
+'DE|Hamburg': '汉堡州',
+'DE|Frankfurt': '黑森州',
+'DE|Cologne': '北莱茵-威斯特法伦州'
+};
+
+// 州代码 → 中文名（美国用 US_STATES，其余国家代码本身即显示名，只有沙特、尼日利亚需要翻译）
+const REGION_NAMES = {
+'SA|Riyadh': '利雅得地区', 'SA|Makkah': '麦加地区', 'SA|Eastern': '东部省', 'SA|Madinah': '麦地那地区',
+'SA|Asir': '阿西尔地区', 'SA|Hail': '哈伊勒地区', 'SA|Najran': '奈季兰地区', 'SA|Jazan': '吉赞地区',
+'NG|Lagos': '拉各斯州', 'NG|FCT': '联邦首都区', 'NG|Kano': '卡诺州', 'NG|Rivers': '河流州',
+'NG|Oyo': '奥约州', 'NG|Edo': '埃多州', 'NG|Kaduna': '卡杜纳州', 'NG|Enugu': '埃努古州',
+'NG|Plateau': '高原州', 'NG|Kwara': '夸拉州', 'NG|Akwa Ibom': '阿夸伊博姆州', 'NG|Delta': '三角洲州',
+'NG|Imo': '伊莫州', 'NG|Benue': '贝努埃州', 'NG|Cross River': '十字河州', 'NG|Ondo': '翁多州',
+'NG|Sokoto': '索科托州', 'NG|Borno': '博尔诺州'
+};
+
+// 不征收消费税的次级行政区：下拉里标「免税」的唯一依据
+const TAX_FREE_REGIONS = {
+'HK|香港岛': '香港自由港，不征收增值税和消费税',
+'HK|九龙': '香港自由港，不征收增值税和消费税',
+'HK|新界': '香港自由港，不征收增值税和消费税'
+};
+
+// 下拉里「全部 XX」用哪个量词
+const REGION_LABELS = {
+US: '州', NG: '州', IN: '邦', CN: '省', CA: '省', TR: '省', ZA: '省', EG: '省', ID: '省',
+AU: '州', BR: '州', MX: '州', DE: '州', RU: '州', SA: '地区', AR: '地区', JP: '都道府县',
+KR: '地区', IT: '大区', ES: '自治区', FR: '大区', UK: '地区', HK: '区域', TW: '县市'
+};
+
 // 各州在用的电话区号，城市区号无法匹配时使用（覆盖本工具会生成地址的州；其余州退回全美随机区号）
 const US_AREA_CODES = {
     CA: [209, 213, 279, 310, 323, 408, 415, 424, 442, 510, 530, 559, 562, 619, 626, 628, 650, 657, 661, 669, 707, 714, 747, 760, 805, 818, 820, 831, 840, 858, 909, 916, 925, 949, 951],
@@ -925,16 +1102,47 @@ function bundleEntryToFound(group, entry) {
     };
 }
 
-// 该国家的内置数据覆盖了哪些州/省，以及各自条数（只有美国、尼日利亚、沙特有州级数据）
+// 一个分组属于哪个州/省：数据自带州字段的优先用，其余国家按城市映射表补
+function regionCodeOf(country, group) {
+    const declared = (group.s || '').trim();
+    if (declared) return declared;
+    return CITY_REGIONS[country + '|' + group.c] || '';
+}
+
+// 州代码 → 界面显示名
+function regionDisplayName(country, code) {
+    if (country === 'US' && US_STATES[code]) return US_STATES[code];
+    return REGION_NAMES[country + '|' + code] || code;
+}
+
+// 该次级行政区是否不征收消费税，以及原因（下拉里「（免税）」的依据）
+function regionTaxFree(country, code) {
+    if (country === 'US') {
+        const item = US_TAX_FREE_STATES[code];
+        return item ? { taxFree: true, note: item.note } : null;
+    }
+    const note = TAX_FREE_REGIONS[country + '|' + code];
+    return note ? { taxFree: true, note } : null;
+}
+
+// 该国家的内置数据覆盖了哪些州/省，以及各自条数
 function bundleStates(country) {
     const map = new Map();
     for (const group of BUNDLED_ADDRESSES[country] || []) {
-        const code = (group.s || '').trim();
+        const code = regionCodeOf(country, group);
         if (!code) continue;
         map.set(code, (map.get(code) || 0) + (group.l ? group.l.length : 0));
     }
     return [...map.entries()]
-        .map(([code, count]) => ({ code, name: (country === 'US' && US_STATES[code]) || code, count }))
+        .map(([code, count]) => {
+            const item = { code, name: regionDisplayName(country, code), count };
+            const tax = regionTaxFree(country, code);
+            if (tax) {
+                item.taxFree = true;
+                item.note = tax.note;
+            }
+            return item;
+        })
         .sort((a, b) => b.count - a.count || a.code.localeCompare(b.code));
 }
 
@@ -946,7 +1154,7 @@ function pickBundled(country, type, taxFree, region) {
         const want = String(region).trim().toLowerCase();
         const code = country === 'US' ? String(getUsStateCode(region) || '').toLowerCase() : '';
         groups = groups.filter(g => {
-            const value = (g.s || '').trim().toLowerCase();
+            const value = regionCodeOf(country, g).toLowerCase();
             return Boolean(value) && (value === want || Boolean(code) && value === code);
         });
     } else {
@@ -1350,7 +1558,7 @@ const htmlContent = `<!DOCTYPE html>
         .workbench { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; }
 
         .toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border-bottom: 1px solid var(--line); }
-        .select-wrap { position: relative; display: flex; align-items: center; min-width: 220px; flex: 0 1 280px; }
+        .select-wrap { position: relative; display: flex; align-items: center; min-width: 150px; flex: 0 1 190px; }
         .select-wrap svg { position: absolute; left: 12px; color: var(--ink-3); pointer-events: none; }
         .select {
             width: 100%;
@@ -1374,7 +1582,7 @@ const htmlContent = `<!DOCTYPE html>
         .segmented-thumb { position: absolute; top: 3px; bottom: 3px; left: 3px; border-radius: 8px; background: var(--surface); box-shadow: 0 1px 2px rgba(13, 18, 32, .08), 0 0 0 1px var(--line); transition: transform .25s cubic-bezier(.3, .7, .2, 1), width .25s cubic-bezier(.3, .7, .2, 1); }
 
         /* 免税州开关（仅美国显示） */
-        .select-wrap--state { flex: 0 1 200px; min-width: 160px; }
+        .select-wrap--state { flex: 0 1 230px; min-width: 170px; }
         .switch-chip { display: inline-flex; align-items: center; gap: 9px; height: 40px; padding: 0 14px 0 12px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-2); color: var(--ink-2); font-weight: 500; cursor: pointer; white-space: nowrap; transition: border-color .15s, color .15s, background .15s; }
         .switch-chip:hover { border-color: var(--line-strong); color: var(--ink); }
         .switch-track { position: relative; width: 28px; height: 16px; border-radius: 999px; background: var(--line-strong); transition: background .2s; }
@@ -2171,8 +2379,9 @@ const htmlContent = `<!DOCTYPE html>
             return target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable);
         }
 
-        // 州/省级筛选：只列出内置数据覆盖的州，切换国家时自动刷新（美国、尼日利亚、沙特有州级数据）
+        // 州/省级筛选：只列出内置数据覆盖的州/省，切换国家时整个下拉跟着换（如切到中国就是各省），默认全部
         let regionOptions = [];
+        let regionLabel = '地区';
 
         function syncRegionWrap() {
             const wrap = byId('stateWrap');
@@ -2188,17 +2397,18 @@ const htmlContent = `<!DOCTYPE html>
                 const response = await fetch('/api/states?country=' + encodeURIComponent(state.country));
                 const data = await response.json();
                 if (Array.isArray(data.states)) regionOptions = data.states;
+                regionLabel = typeof data.regionLabel === 'string' && data.regionLabel ? data.regionLabel : '地区';
             } catch (error) {
                 regionOptions = [];
             }
             select.replaceChildren();
-            const all = el('option', null, '全部州/省');
+            const all = el('option', null, '全部' + regionLabel);
             all.value = '';
             select.appendChild(all);
             regionOptions.forEach(function (item) {
-                const option = el('option', null, item.name || item.code);
+                const option = el('option', null, (item.name || item.code) + (item.taxFree ? '（免税）' : ''));
                 option.value = item.code;
-                option.title = item.count + ' 条内置地址';
+                option.title = item.count + ' 条内置地址' + (item.note ? ' · ' + item.note : '');
                 select.appendChild(option);
             });
             if (state.region && !regionOptions.some(function (item) { return item.code === state.region; })) state.region = '';
@@ -2224,6 +2434,7 @@ const htmlContent = `<!DOCTYPE html>
             select.addEventListener('change', function () {
                 state.country = select.value;
                 state.region = '';
+                loadRegions();
                 syncTaxFreeToggle();
                 savePrefs();
                 generate();
@@ -2378,7 +2589,7 @@ function handleStatesRequest(request) {
     if (!BUNDLED_ADDRESSES[country]) {
         return jsonResponse({ error: 'Invalid country code' }, 400);
     }
-    return jsonResponse({ country, states: bundleStates(country) });
+    return jsonResponse({ country, regionLabel: REGION_LABELS[country] || '地区', states: bundleStates(country) });
 }
 
 // GET /api?country=US&type=residential|commercial|any[&taxFree=1][&state=OR]
@@ -2405,7 +2616,7 @@ async function handleApiRequest(request, event) {
     let region = '';
     if (regionParam) {
         const states = bundleStates(country);
-        const hit = states.find(item => item.code.toLowerCase() === regionParam.toLowerCase());
+        const hit = states.find(item => item.code.toLowerCase() === regionParam.toLowerCase() || item.name.toLowerCase() === regionParam.toLowerCase());
         if (!hit) {
             return jsonResponse({
                 error: '该国家/地区没有匹配的州或省：' + regionParam,
