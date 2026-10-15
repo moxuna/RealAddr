@@ -1,0 +1,16 @@
+# 本地开发用（不随仓库发布）
+bundle_data.json
+worker-nobundle.js
+*.cjs
+*.bak
+
+# 依赖与本地状态
+node_modules/
+.wrangler/
+
+# 测试与运行生成物
+worker-testable.cjs
+*.log
+
+# 历史快照与备份
+_archive/
