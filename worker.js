@@ -54,6 +54,20 @@ const US_TAX_FREE_STATES = {
     AK: { name: 'Alaska', note: '不征收州销售税，部分城市另收地方销售税' }
 };
 
+// 美国州名中文显示（US_STATES 里的英文名保留给上游和接口匹配用）
+const US_STATE_NAMES_ZH = {
+    AL: '阿拉巴马州', AK: '阿拉斯加州', AZ: '亚利桑那州', AR: '阿肯色州', CA: '加利福尼亚州',
+    CO: '科罗拉多州', CT: '康涅狄格州', DE: '特拉华州', FL: '佛罗里达州', GA: '佐治亚州',
+    HI: '夏威夷州', ID: '爱达荷州', IL: '伊利诺伊州', IN: '印第安纳州', IA: '艾奥瓦州',
+    KS: '堪萨斯州', KY: '肯塔基州', LA: '路易斯安那州', ME: '缅因州', MD: '马里兰州',
+    MA: '马萨诸塞州', MI: '密歇根州', MN: '明尼苏达州', MS: '密西西比州', MO: '密苏里州',
+    MT: '蒙大拿州', NE: '内布拉斯加州', NV: '内华达州', NH: '新罕布什尔州', NJ: '新泽西州',
+    NM: '新墨西哥州', NY: '纽约州', NC: '北卡罗来纳州', ND: '北达科他州', OH: '俄亥俄州',
+    OK: '俄克拉何马州', OR: '俄勒冈州', PA: '宾夕法尼亚州', RI: '罗得岛州', SC: '南卡罗来纳州',
+    SD: '南达科他州', TN: '田纳西州', TX: '得克萨斯州', UT: '犹他州', VT: '佛蒙特州',
+    VA: '弗吉尼亚州', WA: '华盛顿州', WV: '西弗吉尼亚州', WI: '威斯康星州', WY: '怀俄明州'
+};
+
 // 城市 → 次级行政区（美国、沙特、尼日利亚的数据自带州字段，其余国家按城市归到省/州/大区）
 const CITY_REGIONS = {
 'CN|Beijing': '北京市',
@@ -1111,8 +1125,26 @@ function regionCodeOf(country, group) {
 
 // 州代码 → 界面显示名
 function regionDisplayName(country, code) {
-    if (country === 'US' && US_STATES[code]) return US_STATES[code];
+    if (country === 'US') return US_STATE_NAMES_ZH[code] || US_STATES[code] || code;
     return REGION_NAMES[country + '|' + code] || code;
+}
+
+// 接口里的 state 参数匹配：州代码、显示名，以及美国州的英文名（页面显示中文，接口仍认 Oregon）
+function regionMatches(country, item, param) {
+    const want = String(param).trim().toLowerCase();
+    if (!want) return false;
+    if (item.code.toLowerCase() === want || item.name.toLowerCase() === want) return true;
+    return Boolean(country === 'US' && US_STATES[item.code] && US_STATES[item.code].toLowerCase() === want);
+}
+
+// 下拉排序：美国按州代码（即英文名字母序），其余国家按中文拼音，方便按名字找
+function compareRegions(country, a, b) {
+    if (country === 'US') return a.code < b.code ? -1 : a.code > b.code ? 1 : 0;
+    try {
+        return a.name.localeCompare(b.name, 'zh-Hans-CN-u-co-pinyin', { sensitivity: 'base' }) || (a.code < b.code ? -1 : 1);
+    } catch (error) {
+        return a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
+    }
 }
 
 // 该次级行政区是否不征收消费税，以及原因（下拉里「（免税）」的依据）
@@ -1143,7 +1175,7 @@ function bundleStates(country) {
             }
             return item;
         })
-        .sort((a, b) => b.count - a.count || a.code.localeCompare(b.code));
+        .sort((a, b) => compareRegions(country, a, b));
 }
 
 // 从内置数据里随机取一条真实地址；没有符合条件的数据时返回 null
@@ -2616,7 +2648,7 @@ async function handleApiRequest(request, event) {
     let region = '';
     if (regionParam) {
         const states = bundleStates(country);
-        const hit = states.find(item => item.code.toLowerCase() === regionParam.toLowerCase() || item.name.toLowerCase() === regionParam.toLowerCase());
+        const hit = states.find(item => regionMatches(country, item, regionParam));
         if (!hit) {
             return jsonResponse({
                 error: '该国家/地区没有匹配的州或省：' + regionParam,
